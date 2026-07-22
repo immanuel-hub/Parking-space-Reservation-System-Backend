@@ -17,3 +17,19 @@ class ParkingLot(models.Model):
 
     def __str__(self):
         return f"{self.name} - {self.location} "
+
+class ParkingSpace(models.Model):
+    STATUS_CHOICES = [('available', 'Available'), ('occupied', 'Occupied')]
+    parking_lot = models.ForeignKey(ParkingLot, on_delete=models.CASCADE, related_name='spaces')
+    space_number = models.PositiveIntegerField()
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='available')
+
+    class Meta:
+        unique_together = ('parking_lot', 'space_number')
+        ordering = ['space_number']
+
+    def __str__(self):
+        return f"Space {self.space_number} in {self.parking_lot.name}"
+
+    def is_taken(self):
+        return self.status in ['reserved', 'occupied']
