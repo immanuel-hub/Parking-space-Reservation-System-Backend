@@ -30,3 +30,18 @@ class UserSerializer(serializers.ModelSerializer):
                 phone_number=validated_data.get('phone_number', '')
             )  
             return user
+
+class ParkingLotSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ParkingLot
+        fields = ['id', 'name', 'location', 'capacity', 'description']
+
+class ParkingSpaceSerializer(serializers.ModelSerializer):
+    is_taken = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ParkingSpace
+        fields = ['id', 'parking_lot', 'space_number', 'status', 'is_active', 'is_taken'] 
+
+    def get_is_taken(self, obj):
+        return obj.is_taken()           
