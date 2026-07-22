@@ -9,7 +9,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class RegisterSerializer(serializers.ModelSerializer):
         password = serializers.CharField(write_only=True, required=True, validators=[validate_Password])
-        password2 = serializers.Charfield(write_only=True, required=True)
+        password2 = serializers.CharField(write_only=True, required=True)
 
         class Meta:
             model = User
@@ -45,3 +45,40 @@ class ParkingSpaceSerializer(serializers.ModelSerializer):
 
     def get_is_taken(self, obj):
         return obj.is_taken()           
+
+class VehicleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Vehicle
+        fields = ['id', 'user', 'license_plate', 'vehicle_type']
+        read_only_fields = ['user']
+class ReservationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Reservation
+        fields = ['id', 'user', 'vehicle', 'space', 'start_time', 'end_time', 'status', 'created_at']
+        read_only_fields = ['user', 'status', 'created_at']
+
+    def validate(self, data):
+        space = data['space']
+        start_time = data['start_time']
+        end_time = data['end_time']
+
+        if start_time >= end_time:
+            raise serializers.ValidationError("End time must be after start time.")
+
+        if space.status != 'available':
+            raise serializers.ValidationError("This space is not available.")
+
+        if Reservation.objects.filter(space=space, status='booked').exists():
+            raise serializers.ValidationError("A reservation already exists for this space.")
+        return data
+
+    def create(self, validated_data):
+        user = self.context['request'].user
+        validated_data['user'] = user
+
+        space = validated_data['space']
+        space.status = 'reserved'
+        space.save()
+
+        reservation = Reservation.objects.create(**validated_data)
+        return reservation
