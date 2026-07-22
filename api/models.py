@@ -33,3 +33,12 @@ class ParkingSpace(models.Model):
 
     def is_taken(self):
         return self.status in ['reserved', 'occupied']
+
+class Vehicle(models.Model):
+    VEHICLE_TYPE_CHOICES = [('car', 'Car'), ('motorcycle', 'Motorcycle'), ('truck', 'Truck')]
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='vehicles')
+    license_plate = models.CharField(max_length=20)
+    vehicle_type = models.CharField(max_length=20, choices=VEHICLE_TYPE_CHOICES, default='car')
+
+    def __str__(self):
+        return f"{self.license_plate} ({self.vehicle_type})"   
