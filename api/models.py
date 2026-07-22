@@ -42,3 +42,29 @@ class Vehicle(models.Model):
 
     def __str__(self):
         return f"{self.license_plate} ({self.vehicle_type})"   
+
+class Reservation(models.Model):
+    STATUS_CHOICES = [
+        ('booked', 'Booked'),
+        ('cancelled', 'Cancelled'),
+        ('completed', 'Completed'),
+    ]
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reservations')
+    vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE, related_name='reservations')
+    space = models.ForeignKey(ParkingSpace, on_delete=models.CASCADE, related_name='reservations')
+    start_time = models.DateTimeField()
+    end_time = models.DateTimeField()
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='booked')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Reservation{self.id} by {self.user.username} for {self.space}"    
+
+    def cancel(self):
+        self.status = 'cancelled'
+        self.space.status = 'available'
+        self.space.save()
+        self.save()
