@@ -26,3 +26,27 @@ class ParkingLotViewSet(viewsets.ModelViewSet):
         if self.action in ['create', 'update', 'partial_update', 'destroy']:
             return [permissions.IsAdminUser()]
         return super().get_permissions()
+class ParkingSpaceViewSet(viewsets.ModelViewSet):
+    queryset = ParkingSpace.objects.select_related('lot').all()
+    serializer_class = ParkingSpaceSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_permissions(self):
+        if self.action in ['create', 'update', 'partial_update', 'destroy']:
+            return [permissions.IsAdminUser()]
+        return super().get_permissions()
+
+class ReservationViewSet(viewsets.ModelViewSet):
+    queryset = Reservation.objects.select_related('space', 'vehicle').all()
+    serializer_class = ReservationSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.role == 'admin':
+            return Reservation.objects.all()
+        return Reservation.objects.filter(user=user)
+
+    def perform_destroy(self, instance):
+        # Feature: Cancellation updates parking space availability
+        instance.cancel()
